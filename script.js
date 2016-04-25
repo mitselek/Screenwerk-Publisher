@@ -3,7 +3,6 @@ var async     = require('async')
 var op        = require('object-path')
 var fs        = require('fs')
 
-
 var entu      = require('entulib')
 
 
@@ -22,6 +21,7 @@ Object.keys(APP_ENTU_OPTIONS).forEach(function(key) {
 
 var lastPollTs = new Date().getTime() - 60*60*1e3
 var screenGroups = {}
+var connectionsInProgress = 0
 
 function setLastPollTs(newTs) {
     console.log('setLastPollTs. Current: ' + new Date(lastPollTs * 1e0) + ', new: ' + new Date(newTs * 1e0))
@@ -41,13 +41,16 @@ function removeScreengroup(id) {
 
 function loadReferrals(parentEid, eDefinition, callback) {
     console.log('loadReferrals for ' + eDefinition + ' ' + parentEid, new Date())
+    connectionsInProgress ++
     entu.getReferrals(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function(referrals) {
+        connectionsInProgress --
         referrals.forEach(function(referral) {
             callback(referral)
         })
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: entu.loadReferrals failed'
         console.log(properties, new Date(), reason)
         reject(reason)
@@ -56,13 +59,16 @@ function loadReferrals(parentEid, eDefinition, callback) {
 
 function loadChilds(parentEid, eDefinition, callback) {
     console.log('loadChilds for ' + eDefinition + ' ' + parentEid, new Date())
+    connectionsInProgress ++
     entu.getChilds(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function(childs) {
+        connectionsInProgress --
         childs.forEach(function(child) {
             callback(child)
         })
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: entu.loadChilds failed'
         console.log(properties, new Date(), reason)
         reject(reason)
@@ -70,8 +76,10 @@ function loadChilds(parentEid, eDefinition, callback) {
 }
 
 function loadMedia(a_in, a_out) {
+    connectionsInProgress ++
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
+        connectionsInProgress --
         var mediaEid = opEntity.get(['id'])
         console.log('-> got Media ', JSON.stringify(mediaEid, null, 4))
         a_out.mediaId = mediaEid
@@ -85,6 +93,7 @@ function loadMedia(a_in, a_out) {
         a_out.width = opEntity.get(['properties','width',0,'value'], '')
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: loadConfiguration.entu.getEntity failed'
         console.log(properties, new Date(), reason)
         reject(reason)
@@ -92,8 +101,10 @@ function loadMedia(a_in, a_out) {
 }
 
 function loadPlaylist(a_in, a_out) {
+    connectionsInProgress ++
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
+        connectionsInProgress --
         var playlistEid = opEntity.get(['id'])
         console.log('-> got Playlist ', JSON.stringify(playlistEid, null, 4))
         a_out.playlistId = playlistEid
@@ -121,6 +132,7 @@ function loadPlaylist(a_in, a_out) {
         })(a_out.playlistMedias, playlistEid)
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: loadConfiguration.entu.getEntity failed'
         console.log(properties, new Date(), reason)
         reject(reason)
@@ -128,8 +140,10 @@ function loadPlaylist(a_in, a_out) {
 }
 
 function loadLayout(a_in, a_out) {
+    connectionsInProgress ++
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
+        connectionsInProgress --
         var layoutEid = opEntity.get(['id'])
         console.log('-> got Layout ', JSON.stringify(layoutEid, null, 4))
         // op.set(a_out, [a_in.reference], {
@@ -160,6 +174,7 @@ function loadLayout(a_in, a_out) {
         })(a_out.layoutPlaylists, layoutEid)
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: loadConfiguration.entu.getEntity failed'
         console.log(properties, new Date(), reason)
         reject(reason)
@@ -167,8 +182,10 @@ function loadLayout(a_in, a_out) {
 }
 
 function loadConfiguration(a_in, a_out) {
+    connectionsInProgress ++
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
+        connectionsInProgress --
         console.log('-> got Configuration ', JSON.stringify(opEntity.get(['id']), null, 4))
         a_out.configurationId = opEntity.get(['id'])
         a_out.name = opEntity.get(['properties','name',0,'value'], '')
@@ -193,16 +210,19 @@ function loadConfiguration(a_in, a_out) {
         })(a_out.schedules, a_out.configurationId)
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: loadConfiguration.entu.getEntity failed'
         console.log(properties, new Date(), reason)
         reject(reason)
     })
 }
 
-function loadScreengroup(sgEid) {
+function loadScreengroup(sgEid, callback) {
     console.log('Checking screen group ' + sgEid)
+    connectionsInProgress ++
     entu.getEntity(sgEid, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
+        connectionsInProgress --
         if (opEntity.get(['properties','isPublished',0,'value'], 'False') === 'False') {
             console.log('Screen group ' + sgEid + ' not published')
             return
@@ -211,7 +231,6 @@ function loadScreengroup(sgEid) {
         op.set(screenGroups, [sgEid], {
             id: opEntity.get(['id']),
             name: opEntity.get(['properties','name',0,'value'], ''),
-            // configuration: {},
             screens: {},
         })
         loadConfiguration(opEntity.get(['properties','configuration',0]), screenGroups[sgEid])
@@ -225,14 +244,12 @@ function loadScreengroup(sgEid) {
                 })
             })
         })(sgEid)
-        // console.log('getEntity 1:', opEntity.get())
-        return(opEntity)
+        return opEntity
     })
     // Remove isPublished flag, if screen group was published and is loaded successfully
     .then(function(opEntity) {
-        if (!opEntity) { return }
+        if (!opEntity) { return callback() }
 
-        // console.log('opEntity 2:', opEntity.get())
         var properties = {
             entity_id: sgEid,
             entity_definition: 'sw-screen-group',
@@ -240,8 +257,11 @@ function loadScreengroup(sgEid) {
             property_id: opEntity.get(['properties','isPublished',0,'id']),
             new_value: ''
         }
+        connectionsInProgress ++
         entu.edit(properties, APP_ENTU_OPTIONS)
         .then(function(result) {
+            connectionsInProgress --
+            callback()
         })
         .catch(function(reason) {
             var message = '*INFO*: entu.edit failed'
@@ -250,14 +270,21 @@ function loadScreengroup(sgEid) {
         })
     })
     .catch(function(reason) {
+        connectionsInProgress --
         var message = '*INFO*: loadScreengroup failed, retry in ' + POLLING_INTERVAL_MS / 1e2
         console.log(message, new Date(), reason)
-        setTimeout(function() { loadScreengroup(id) }, POLLING_INTERVAL_MS * 10)
+        setTimeout(function() { loadScreengroup(id, callback) }, POLLING_INTERVAL_MS * 10)
     })
 }
 
 function pollEntu() {
-    var updated = false
+    if (connectionsInProgress !== 0) {
+        var message = '*INFO*: pollEntu already busy (' + connectionsInProgress + '). '
+        + 'Try again in ' + POLLING_INTERVAL_MS / 1e2
+        console.log(message, new Date())
+        setTimeout(function() { pollEntu() }, POLLING_INTERVAL_MS * 10)
+        return
+    }
 
     pollOptions.timestamp = (lastPollTs + 1) / 1e3
     pollOptions.definition = 'sw-screen-group'
@@ -273,16 +300,16 @@ function pollEntu() {
         var toGo = updates.length
         async.eachSeries(updates, function(update, callback) {
             if (update.timestamp > 0) { setLastPollTs(update.timestamp * 1e3) }
+            var sgEid = update.id
 
             if (update.action === 'deleted at') {
-                console.log('(' + (toGo--) + ') Removing ' + update.definition + ' ' + update.id + ' @ ' + update.timestamp + (new Date(update.timestamp * 1e0)))
-                removeScreengroup(update.id)
+                console.log('(' + (toGo--) + ') Removing ' + update.definition + ' ' + sgEid + ' @ ' + update.timestamp + (new Date(update.timestamp * 1e0)))
+                removeScreengroup(sgEid)
                 return callback()
             }
 
-            console.log('(' + (toGo--) + ') Updating ' + update.definition + ' ' + update.id + ' @ ' + update.timestamp + ' ' + (new Date(update.timestamp * 1e0)))
-            loadScreengroup(update.id)
-            return callback()
+            console.log('(' + (toGo--) + ') Updating ' + update.definition + ' ' + sgEid + ' @ ' + update.timestamp + ' ' + (new Date(update.timestamp * 1e0)))
+            loadScreengroup(sgEid, callback)
         }, function(err) {
             if (err) {
                 var message = '*INFO*: Poll routine stumbled. Restart in ' + POLLING_INTERVAL_MS / 1e2
