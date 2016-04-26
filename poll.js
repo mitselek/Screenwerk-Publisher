@@ -20,8 +20,10 @@ Object.keys(APP_ENTU_OPTIONS).forEach(function(key) {
 })
 
 var lastPollTs = new Date().getTime() - 60*60*1e3
-var screenGroups = {}
 var connectionsInProgress = 0
+var updated = false
+
+var screenGroups = JSON.parse(fs.readFileSync('screenGroups.json'))
 
 function setLastPollTs(newTs) {
     console.log('setLastPollTs. Current: ' + new Date(lastPollTs * 1e0) + ', new: ' + new Date(newTs * 1e0))
@@ -40,7 +42,7 @@ function removeScreengroup(id) {
 }
 
 function loadReferrals(parentEid, eDefinition, callback) {
-    console.log('loadReferrals for ' + eDefinition + ' ' + parentEid, new Date())
+    // console.log('loadReferrals for ' + eDefinition + ' ' + parentEid, new Date())
     connectionsInProgress ++
     entu.getReferrals(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function(referrals) {
@@ -58,7 +60,7 @@ function loadReferrals(parentEid, eDefinition, callback) {
 }
 
 function loadChilds(parentEid, eDefinition, callback) {
-    console.log('loadChilds for ' + eDefinition + ' ' + parentEid, new Date())
+    // console.log('loadChilds for ' + eDefinition + ' ' + parentEid, new Date())
     connectionsInProgress ++
     entu.getChilds(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function(childs) {
@@ -80,8 +82,11 @@ function loadMedia(a_in, a_out) {
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
         connectionsInProgress --
+        if (opEntity.get(['properties','valid-to',0,'value'], false)) {
+            console.log('media ' + opEntity.get(['properties','valid-to',0,'value'], 'FOO'))
+        }
         var mediaEid = opEntity.get(['id'])
-        console.log('-> got Media ', JSON.stringify(mediaEid, null, 4))
+        // console.log('-> got Media ', JSON.stringify(mediaEid, null, 4))
         a_out.mediaId = mediaEid
         a_out.file = opEntity.get(['properties','file',0,'value'], '')
         a_out.height = opEntity.get(['properties','height',0,'value'], '')
@@ -105,8 +110,11 @@ function loadPlaylist(a_in, a_out) {
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
         connectionsInProgress --
+        if (opEntity.get(['properties','valid-to',0,'value'], false)) {
+            console.log('playlist ' + opEntity.get(['properties','valid-to',0,'value'], 'FOO'))
+        }
         var playlistEid = opEntity.get(['id'])
-        console.log('-> got Playlist ', JSON.stringify(playlistEid, null, 4))
+        // console.log('-> got Playlist ', JSON.stringify(playlistEid, null, 4))
         a_out.playlistId = playlistEid
         a_out.name = opEntity.get(['properties','name',0,'value'], '')
         a_out.playlistValidFrom = opEntity.get(['properties','valid-from',0,'value'], '')
@@ -115,7 +123,10 @@ function loadPlaylist(a_in, a_out) {
         ;(function(playlistMedias, playlistEid) {
             loadChilds(playlistEid, 'sw-playlist-media', function(opEntity) {
                 var playlistMediaEid = opEntity.get(['id'])
-                console.log('-> got plM ', JSON.stringify(playlistMediaEid, null, 4))
+                if (opEntity.get(['properties','valid-to',0,'value'], false)) {
+                    console.log('plmedia ' + opEntity.get(['properties','valid-to',0,'value'], 'FOO'))
+                }
+                // console.log('-> got plM ', JSON.stringify(playlistMediaEid, null, 4))
                 op.set(playlistMedias, [playlistMediaEid], {
                     id: playlistMediaEid,
                     animate: opEntity.get(['properties','animate',0,'value']),
@@ -124,8 +135,8 @@ function loadPlaylist(a_in, a_out) {
                     mute: opEntity.get(['properties','mute',0,'value']),
                     ordinal: opEntity.get(['properties','ordinal',0,'value']),
                     stretch: opEntity.get(['properties','stretch',0,'value']),
-                    validFrom: opEntity.get(['properties','valid-from',0,'value']),
-                    validTo: opEntity.get(['properties','valid-to',0,'value']),
+                    plmediaValidFrom: opEntity.get(['properties','valid-from',0,'value']),
+                    plmediaValidTo: opEntity.get(['properties','valid-to',0,'value']),
                 })
                 loadMedia(opEntity.get(['properties','media',0]), op.get(playlistMedias, [playlistMediaEid]))
             })
@@ -145,7 +156,7 @@ function loadLayout(a_in, a_out) {
     .then(function(opEntity) {
         connectionsInProgress --
         var layoutEid = opEntity.get(['id'])
-        console.log('-> got Layout ', JSON.stringify(layoutEid, null, 4))
+        // console.log('-> got Layout ', JSON.stringify(layoutEid, null, 4))
         // op.set(a_out, [a_in.reference], {
         //     id: layoutEid,
         //     name: opEntity.get(['properties','name',0,'value'], ''),
@@ -157,7 +168,7 @@ function loadLayout(a_in, a_out) {
         ;(function(layoutPlaylists, layoutEid) {
             loadChilds(layoutEid, 'sw-layout-playlist', function(opEntity) {
                 var layoutPlaylistEid = opEntity.get(['id'])
-                console.log('-> got lPl ', JSON.stringify(layoutPlaylistEid, null, 4))
+                // console.log('-> got lPl ', JSON.stringify(layoutPlaylistEid, null, 4))
                 op.set(layoutPlaylists, [layoutPlaylistEid], {
                     id: layoutPlaylistEid,
                     name: opEntity.get(['properties','name',0,'value']),
@@ -186,7 +197,7 @@ function loadConfiguration(a_in, a_out) {
     entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function(opEntity) {
         connectionsInProgress --
-        console.log('-> got Configuration ', JSON.stringify(opEntity.get(['id']), null, 4))
+        // console.log('-> got Configuration ', JSON.stringify(opEntity.get(['id']), null, 4))
         a_out.configurationId = opEntity.get(['id'])
         a_out.name = opEntity.get(['properties','name',0,'value'], '')
         a_out.updateInterval = Number(opEntity.get(['properties','update-interval',0,'value'], 0))
@@ -194,15 +205,18 @@ function loadConfiguration(a_in, a_out) {
 
         ;(function(schedules, cEid) {
             loadChilds(cEid, 'sw-schedule', function(opEntity) {
+                if (opEntity.get(['properties','valid-to',0,'value'], false)) {
+                    console.log('schedule ' + opEntity.get(['properties','valid-to',0,'value'], 'FOO'))
+                }
                 var childEid = opEntity.get(['id'])
-                console.log('-> got Sch ', JSON.stringify(childEid, null, 4))
+                // console.log('-> got Sch ', JSON.stringify(childEid, null, 4))
                 op.set(schedules, [childEid], {
                     id: childEid,
                     cleanup: opEntity.get(['properties','cleanup',0,'value']),
                     crontab: opEntity.get(['properties','crontab',0,'value']),
                     duration: opEntity.get(['properties','duration',0,'value']),
-                    validFrom: opEntity.get(['properties','valid-from',0,'value']),
-                    validTo: opEntity.get(['properties','valid-to',0,'value']),
+                    scheduleValidFrom: opEntity.get(['properties','valid-from',0,'value']),
+                    scheduleValidTo: opEntity.get(['properties','valid-to',0,'value']),
                     ordinal: opEntity.get(['properties','ordinal',0,'value']),
                 })
                 loadLayout(opEntity.get(['properties','layout',0]), op.get(schedules, [childEid]))
@@ -227,7 +241,8 @@ function loadScreengroup(sgEid, callback) {
             console.log('Screen group ' + sgEid + ' not published')
             return
         }
-        console.log('-> got SG ', JSON.stringify(opEntity.get(['id']), null, 4))
+        updated = true
+        // console.log('-> got SG ', JSON.stringify(opEntity.get(['id']), null, 4))
         op.set(screenGroups, [sgEid], {
             id: opEntity.get(['id']),
             name: opEntity.get(['properties','name',0,'value'], ''),
@@ -236,7 +251,7 @@ function loadScreengroup(sgEid, callback) {
         loadConfiguration(opEntity.get(['properties','configuration',0]), screenGroups[sgEid])
         ;(function(sgEid) {
             loadReferrals(sgEid, 'sw-screen', function(opEntity) {
-                console.log('-> got S ', JSON.stringify(opEntity.get(['id']), null, 4))
+                // console.log('-> got S ', JSON.stringify(opEntity.get(['id']), null, 4))
                 op.set(screenGroups[sgEid].screens, [opEntity.get(['id'])], {
                     id: opEntity.get(['id']),
                     name: opEntity.get(['properties','name',0,'value'], ''),
@@ -318,11 +333,15 @@ function pollEntu() {
                 return
             }
             console.log('Poll routine finished', new Date())
+            if (connectionsInProgress === 0 && updated === true) {
+                updated = false
+                fs.writeFile('screenGroups.json', JSON.stringify(screenGroups, null, 4))
+            }
             setTimeout(function() { pollEntu() }, POLLING_INTERVAL_MS)
         })
     })
     .then(function() {
-        console.log(JSON.stringify(screenGroups, null, 4))
+        // console.log(JSON.stringify(screenGroups, null, 4))
     })
     .catch(function(reason) {
         var message = '*INFO*: Entu.pollUpdates failed. Restart in ' + POLLING_INTERVAL_MS / 1e2

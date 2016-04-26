@@ -2,7 +2,7 @@
   "name": "ScreenWerk-Publisher",
   "description": "Backend for Screenwerk players",
   "version": "0.1.0",
-  "main": "./script.js",
+  "main": "./master.js",
   "license": "MIT",
   "private": true,
   "single-instance": false,
@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "entulib": "^0.1.7",
-    "object-path": "^0.9.2"
+    "entulib": "*",
+    "express": "^4.13.4",
+    "object-path": "^0.9.2",
+    "raven": "^0.10.0"
   }
 }
