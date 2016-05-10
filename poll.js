@@ -1,4 +1,3 @@
-var path = require('path')
 var async = require('async')
 var op = require('object-path')
 var fs = require('fs')
@@ -23,7 +22,10 @@ var connectionsInProgress = 0
 console.log(' = = = Reset ' + connectionsInProgress)
 var updated = false
 
-var screenGroups = JSON.parse(fs.readFileSync('screenGroups.json'))
+var screenGroups = {}
+if (fs.existsSync('screenGroups.json')) {
+  screenGroups = JSON.parse(fs.readFileSync('screenGroups.json'))
+}
 
 function setLastPollTs (newTs) {
   console.log('setLastPollTs. Current: ' + new Date(lastPollTs * 1e0) + ', new: ' + new Date(newTs * 1e0))
@@ -35,9 +37,9 @@ function setLastPollTs (newTs) {
   }
 }
 
-function removeScreengroup (id) {
-  console.log('Removing screen group ' + id)
-  op.del(screenGroups, id)
+function removeScreengroup (eid) {
+  console.log('Removing screen group ' + eid)
+  op.del(screenGroups, eid)
 }
 
 function loadReferrals (parentEid, eDefinition, callback) {
@@ -87,10 +89,13 @@ function loadMedia (a_in, a_out) {
     .then(function (opEntity) {
       connectionsInProgress--
       console.log(' = = = loadMedia ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = File ' + JSON.stringify(opEntity.get(['properties', 'file', 0]), ''))
       var mediaEid = opEntity.get(['id'])
-      a_out.mediaId = mediaEid
-      a_out.file = opEntity.get(['properties', 'file', 0, 'value'], '')
+      a_out.mediaEid = mediaEid
+      a_out.file = opEntity.get(['properties', 'file', 0, 'file'], '')
+      a_out.fileName = opEntity.get(['properties', 'file', 0, 'value'], '')
       a_out.height = opEntity.get(['properties', 'height', 0, 'value'], '')
+      a_out.width = opEntity.get(['properties', 'width', 0, 'value'], '')
       a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
       a_out.type = opEntity.get(['properties', 'type', 0, 'value'], '')
       a_out.url = opEntity.get(['properties', 'url', 0, 'value'], '')
@@ -98,18 +103,17 @@ function loadMedia (a_in, a_out) {
       var validFrom = opEntity.get(['properties', 'valid-from', 0, 'value'], false)
       if (validFrom) {
         if (a_out.validFrom && a_out.validFrom < validFrom) {
-          console.log('Replacing validFrom for ' + a_out.mediaId + ': ' + a_out.validFrom + ' <-- ' + validFrom)
+          console.log('Replacing validFrom for ' + a_out.mediaEid + ': ' + a_out.validFrom + ' <-- ' + validFrom)
           a_out.validFrom = validFrom
         }
       }
       var validTo = opEntity.get(['properties', 'valid-to', 0, 'value'], false)
       if (validTo) {
         if (a_out.validTo && a_out.validTo > validTo) {
-          console.log('Replacing validTo for ' + a_out.mediaId + ': ' + a_out.validTo + ' <-- ' + validTo)
+          console.log('Replacing validTo for ' + a_out.mediaEid + ': ' + a_out.validTo + ' <-- ' + validTo)
           a_out.validTo = validTo
         }
       }
-      a_out.width = opEntity.get(['properties', 'width', 0, 'value'], '')
     })
     .catch(function (reason) {
       connectionsInProgress--
@@ -128,7 +132,7 @@ function loadPlaylist (a_in, a_out) {
       connectionsInProgress--
       console.log(' = = = loadPlaylist ' + a_in.reference + ' decr ' + connectionsInProgress)
       var playlistEid = opEntity.get(['id'])
-      a_out.playlistId = playlistEid
+      a_out.playlistEid = playlistEid
       a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
       a_out.validFrom = opEntity.get(['properties', 'valid-from', 0, 'value'], '')
       a_out.validTo = opEntity.get(['properties', 'valid-to', 0, 'value'], '')
@@ -137,7 +141,7 @@ function loadPlaylist (a_in, a_out) {
         loadChilds(playlistEid, 'sw-playlist-media', function (opEntity) {
           var playlistMediaEid = opEntity.get(['id'])
           op.set(playlistMedias, [playlistMediaEid], {
-            id: playlistMediaEid,
+            eid: playlistMediaEid,
             animate: opEntity.get(['properties', 'animate', 0, 'value']),
             delay: opEntity.get(['properties', 'delay', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
@@ -168,14 +172,14 @@ function loadLayout (a_in, a_out) {
       connectionsInProgress--
       console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
       var layoutEid = opEntity.get(['id'])
-      a_out.layoutId = layoutEid
+      a_out.layoutEid = layoutEid
       a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
       a_out.layoutPlaylists = {}
       ;(function (layoutPlaylists, layoutEid) {
         loadChilds(layoutEid, 'sw-layout-playlist', function (opEntity) {
           var layoutPlaylistEid = opEntity.get(['id'])
           op.set(layoutPlaylists, [layoutPlaylistEid], {
-            id: layoutPlaylistEid,
+            eid: layoutPlaylistEid,
             name: opEntity.get(['properties', 'name', 0, 'value']),
             left: opEntity.get(['properties', 'left', 0, 'value']),
             top: opEntity.get(['properties', 'top', 0, 'value']),
@@ -205,7 +209,7 @@ function loadConfiguration (a_in, a_out) {
     .then(function (opEntity) {
       connectionsInProgress--
       console.log(' = = = loadConfiguration ' + a_in.reference + ' decr ' + connectionsInProgress)
-      a_out.configurationId = opEntity.get(['id'])
+      a_out.configurationEid = opEntity.get(['id'])
       a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
       a_out.updateInterval = Number(opEntity.get(['properties', 'update-interval', 0, 'value'], 0))
       a_out.schedules = {}
@@ -214,7 +218,7 @@ function loadConfiguration (a_in, a_out) {
         loadChilds(cEid, 'sw-schedule', function (opEntity) {
           var childEid = opEntity.get(['id'])
           op.set(schedules, [childEid], {
-            id: childEid,
+            eid: childEid,
             cleanup: opEntity.get(['properties', 'cleanup', 0, 'value']),
             crontab: opEntity.get(['properties', 'crontab', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
@@ -224,7 +228,7 @@ function loadConfiguration (a_in, a_out) {
           })
           loadLayout(opEntity.get(['properties', 'layout', 0]), op.get(schedules, [childEid]))
         })
-      })(a_out.schedules, a_out.configurationId)
+      })(a_out.schedules, a_out.configurationEid)
     })
     .catch(function (reason) {
       connectionsInProgress--
@@ -248,7 +252,7 @@ function loadScreengroup (sgEid, callback) {
       }
       updated = true
       op.set(screenGroups, [sgEid], {
-        id: opEntity.get(['id']),
+        eid: opEntity.get(['id']),
         name: opEntity.get(['properties', 'name', 0, 'value'], ''),
         screens: {}
       })
@@ -256,7 +260,7 @@ function loadScreengroup (sgEid, callback) {
       ;(function (sgEid) {
         loadReferrals(sgEid, 'sw-screen', function (opEntity) {
           op.set(screenGroups[sgEid].screens, [opEntity.get(['id'])], {
-            id: opEntity.get(['id']),
+            eid: opEntity.get(['id']),
             name: opEntity.get(['properties', 'name', 0, 'value'], ''),
             screenshot: opEntity.get(['properties', 'photo', 0, 'file'], '')
           })
