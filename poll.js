@@ -143,8 +143,8 @@ function loadPlaylist (a_in, a_out) {
           op.set(playlistMedias, [playlistMediaEid], {
             eid: playlistMediaEid,
             animate: opEntity.get(['properties', 'animate', 0, 'value']),
-            delay: opEntity.get(['properties', 'delay', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
+            delay: opEntity.get(['properties', 'delay', 0, 'value']),
             mute: opEntity.get(['properties', 'mute', 0, 'value']),
             ordinal: opEntity.get(['properties', 'ordinal', 0, 'value']),
             stretch: opEntity.get(['properties', 'stretch', 0, 'value']),
@@ -253,6 +253,7 @@ function loadScreengroup (sgEid, callback) {
       updated = true
       op.set(screenGroups, [sgEid], {
         eid: opEntity.get(['id']),
+        lastPoll: new Date(lastPollTs).toISOString(),
         name: opEntity.get(['properties', 'name', 0, 'value'], ''),
         screens: {}
       })
