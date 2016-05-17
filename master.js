@@ -2,10 +2,10 @@ var cluster = require('cluster')
 // var raven = require('raven')
 
 if (!process.env.ENTU_USER) {
-  throw '"ENTU_USER" missing in environment'
+  throw new Error('"ENTU_USER" missing in environment')
 }
 if (!process.env.ENTU_KEY) {
-  throw '"ENTU_KEY" missing in environment'
+  throw new Error('"ENTU_KEY" missing in environment')
 }
 
 APP_DEPLOYMENT = process.env.DEPLOYMENT

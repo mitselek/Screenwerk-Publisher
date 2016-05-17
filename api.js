@@ -1,30 +1,43 @@
-var fs = require('fs')
-var op = require('object-path')
-var express = require('express')
+const express = require('express')
+const fs = require('fs')
+const path = require('path')
 
-var app = express()
+const app = express()
 app.listen(3000)
 
+app.get('/', function (req, res) {
+  const startAt = process.hrtime()
+  let diff = process.hrtime(startAt)
+  res.send(JSON.stringify({
+    error: {
+      code: 'Matthew 7:7',
+      message: 'Ask, and it shall be given you; seek, and ye shall find; knock, and it shall be opened unto you',
+      screenEid: 'You haven\'t told me',
+      responseTimeMs: diff[0] * 1e3 + diff[1] * 1e-6
+    }
+  }, null, 4))
+})
+
 app.get('/configuration/:screenEid', function (req, res) {
-  var screenGroups = JSON.parse(fs.readFileSync('screenGroups.json'))
-  var screenEid = req.params.screenEid
-
-  var sgEid = Object.keys(screenGroups).filter(function (sgEid) {
-    return Object.keys(screenGroups[sgEid].screens).indexOf(screenEid) > -1
-  })[0]
-
-  if (sgEid === undefined) {
+  const startAt = process.hrtime()
+  const screenEid = req.params.screenEid
+  const screenFile = path.join(__dirname, 'screens', screenEid + '.json')
+  if (!fs.existsSync(screenFile)) {
+    let diff = process.hrtime(startAt)
     res.send(JSON.stringify({
       error: {
         code: 401,
-        message: 'No such screen',
-        screenEid: screenEid
+        message: 'No such screen cached yet',
+        screenEid: screenEid,
+        responseTimeMs: diff[0] * 1e3 + diff[1] * 1e-6
       }
     }, null, 4))
-  } else {
-    op.set(screenGroups[sgEid], ['isoDate'], new Date().toISOString())
-    op.set(screenGroups[sgEid], ['screen'], screenGroups[sgEid].screens[screenEid])
-    op.del(screenGroups[sgEid], ['screens'])
-    res.send(JSON.stringify(screenGroups[sgEid], null, 4))
+    return
   }
+
+  let screen = JSON.parse(fs.readFileSync(screenFile))
+  screen.isoDate = new Date().toISOString()
+  let diff = process.hrtime(startAt)
+  screen.responseTimeMs = diff[0] * 1e3 + diff[1] * 1e-6
+  res.send(JSON.stringify(screen))
 })
