@@ -26,7 +26,7 @@ if (!fs.existsSync(screensDir)) {
 var lastPollTs = new Date().getTime() - 60 * 60 * 1e3
 var connectionsInProgress = 0
 console.log(' = = = Reset ' + connectionsInProgress)
-var updated = false
+var updateStatus = 'NO_UPDATES'
 
 var screenGroups = {}
 if (fs.existsSync('screenGroups.json')) {
@@ -86,38 +86,13 @@ function loadChilds (parentEid, eDefinition, callback) {
     })
 }
 
-function loadMedia (a_in, a_out) {
+function loadMedia (a_in, callback) {
   connectionsInProgress++
   console.log(' = = = loadMedia ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
-      console.log(' = = = loadMedia ' + a_in.reference + ' decr ' + connectionsInProgress)
-      console.log(' = = = File ' + JSON.stringify(opEntity.get(['properties', 'file', 0]), ''))
-      let mediaEid = opEntity.get(['id'])
-      a_out.mediaEid = mediaEid
-      a_out.file = opEntity.get(['properties', 'file', 0, 'file'], '')
-      a_out.fileName = opEntity.get(['properties', 'file', 0, 'value'], '')
-      a_out.height = opEntity.get(['properties', 'height', 0, 'value'], '')
-      a_out.width = opEntity.get(['properties', 'width', 0, 'value'], '')
-      a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
-      a_out.type = opEntity.get(['properties', 'type', 0, 'value'], '')
-      a_out.url = opEntity.get(['properties', 'url', 0, 'value'], '')
-
-      let validFrom = opEntity.get(['properties', 'valid-from', 0, 'value'], false)
-      if (validFrom) {
-        if (a_out.validFrom && a_out.validFrom < validFrom) {
-          console.log('Replacing validFrom for ' + a_out.mediaEid + ': ' + a_out.validFrom + ' <-- ' + validFrom)
-          a_out.validFrom = validFrom
-        }
-      }
-      let validTo = opEntity.get(['properties', 'valid-to', 0, 'value'], false)
-      if (validTo) {
-        if (a_out.validTo && a_out.validTo > validTo) {
-          console.log('Replacing validTo for ' + a_out.mediaEid + ': ' + a_out.validTo + ' <-- ' + validTo)
-          a_out.validTo = validTo
-        }
-      }
+      callback(null, opEntity)
     })
     .catch(function (reason) {
       connectionsInProgress--
@@ -127,7 +102,49 @@ function loadMedia (a_in, a_out) {
     })
 }
 
-function loadPlaylist (a_in, a_out) {
+function buildMedia (opMedia, swMedia, callback) {
+  console.log(' = = = File ' + JSON.stringify(opMedia.get(['properties', 'file', 0], 'No file for ' + opMedia.get(['properties', 'type', 0, 'value'], '_type_') + ' for media ' + opMedia.get('id'))))
+  let mediaEid = opMedia.get(['id'])
+  swMedia.mediaEid = mediaEid
+  swMedia.file = opMedia.get(['properties', 'file', 0, 'file'])
+  swMedia.fileName = opMedia.get(['properties', 'file', 0, 'value'])
+  swMedia.height = opMedia.get(['properties', 'height', 0, 'value'], '')
+  swMedia.width = opMedia.get(['properties', 'width', 0, 'value'], '')
+  swMedia.name = opMedia.get(['properties', 'name', 0, 'value'], '')
+  swMedia.type = opMedia.get(['properties', 'type', 0, 'value'], '')
+  swMedia.url = opMedia.get(['properties', 'url', 0, 'value'], '')
+
+  let validFrom = opMedia.get(['properties', 'valid-from', 0, 'value'], false)
+  if (validFrom) {
+    if (swMedia.validFrom && swMedia.validFrom < validFrom) {
+      console.log('Replacing validFrom for ' + swMedia.mediaEid + ': ' + swMedia.validFrom + ' <-- ' + validFrom)
+      swMedia.validFrom = validFrom
+    }
+  }
+  let validTo = opMedia.get(['properties', 'valid-to', 0, 'value'], false)
+  if (validTo) {
+    if (swMedia.validTo && swMedia.validTo > validTo) {
+      console.log('Replacing validTo for ' + swMedia.mediaEid + ': ' + swMedia.validTo + ' <-- ' + validTo)
+      swMedia.validTo = validTo
+    }
+  }
+  callback(null)
+}
+
+function validateMedia (swMedia) {
+  if (swMedia.type === 'Image') {
+    if (!swMedia.duration || swMedia.duration === 0) {
+      throw new Error('Error: Image media should have duration!', swMedia)
+    }
+  }
+  if (swMedia.type !== 'URL') {
+    if (!swMedia.file || !swMedia.fileName) {
+      throw new Error('Error: Missing file for media!', swMedia)
+    }
+  }
+}
+
+function loadPlaylist (a_in, swPlaylist) {
   connectionsInProgress++
   console.log(' = = = loadPlaylist ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
@@ -135,16 +152,16 @@ function loadPlaylist (a_in, a_out) {
       connectionsInProgress--
       console.log(' = = = loadPlaylist ' + a_in.reference + ' decr ' + connectionsInProgress)
       let playlistEid = opEntity.get(['id'])
-      a_out.playlistEid = playlistEid
-      a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
-      a_out.validFrom = opEntity.get(['properties', 'valid-from', 0, 'value'], '')
-      a_out.validTo = opEntity.get(['properties', 'valid-to', 0, 'value'], '')
-      a_out.playlistMedias = {}
+      swPlaylist.playlistEid = playlistEid
+      swPlaylist.name = opEntity.get(['properties', 'name', 0, 'value'], '')
+      swPlaylist.validFrom = opEntity.get(['properties', 'valid-from', 0, 'value'], '')
+      swPlaylist.validTo = opEntity.get(['properties', 'valid-to', 0, 'value'], '')
+      swPlaylist.playlistMedias = {}
       ;(function (playlistMedias, playlistEid) {
         loadChilds(playlistEid, 'sw-playlist-media', function (opEntity) {
           let playlistMediaEid = opEntity.get(['id'])
-          op.set(playlistMedias, [playlistMediaEid], {
-            eid: playlistMediaEid,
+          let swMedia = {
+            playlistMediaEid: playlistMediaEid,
             animate: opEntity.get(['properties', 'animate', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
             delay: opEntity.get(['properties', 'delay', 0, 'value']),
@@ -153,10 +170,19 @@ function loadPlaylist (a_in, a_out) {
             stretch: opEntity.get(['properties', 'stretch', 0, 'value']),
             validFrom: opEntity.get(['properties', 'valid-from', 0, 'value']),
             validTo: opEntity.get(['properties', 'valid-to', 0, 'value'])
+          }
+          op.set(playlistMedias, [playlistMediaEid], swMedia)
+          loadMedia(opEntity.get(['properties', 'media', 0]), (err, opMedia) => {
+            if (err) { throw err }
+            buildMedia(opMedia, swMedia, (err) => {
+              if (err) { throw err }
+              validateMedia(swMedia, (err) => {
+                if (err) { throw err }
+              })
+            })
           })
-          loadMedia(opEntity.get(['properties', 'media', 0]), op.get(playlistMedias, [playlistMediaEid]))
         })
-      })(a_out.playlistMedias, playlistEid)
+      })(swPlaylist.playlistMedias, playlistEid)
     })
     .catch(function (reason) {
       connectionsInProgress--
@@ -249,7 +275,7 @@ function loadScreengroup (sgEid, callback) {
         console.log('Screen group ' + sgEid + ' not published')
         return
       }
-      updated = true
+      updateStatus = 'IS_UPDATED'
       console.log(opEntity.get(['id']) + ' published at ' + opEntity.get(['properties', 'published', 0, 'value'], '') +
         ' = ' + new Date(opEntity.get(['properties', 'published', 0, 'value'], '')).toISOString())
       op.set(screenGroups, [sgEid], {
@@ -332,7 +358,7 @@ function extractScreenData (screenGroups) {
         if (err) { console.log(err) }
         fs.writeFile(path.resolve(screensDir, screenEid + '.json'), JSON.stringify(configuration, null, 4), (err) => {
           if (err) { console.log(err) }
-          console.log('Screen ' + screenEid + ' extracted.')
+          // console.log('Screen ' + screenEid + ' extracted.')
           callback()
         })
       })
@@ -387,12 +413,18 @@ function pollEntu () {
           return
         }
         console.log('Poll routine finished', new Date())
-        if (connectionsInProgress === 0 && updated === true) {
-          updated = false
+        if (connectionsInProgress === 0 && updateStatus === 'IS_UPDATED') {
+          updateStatus = 'NO_UPDATES'
           fs.writeFile('screenGroups.json', JSON.stringify(screenGroups, null, 4), (err) => {
             if (err) { throw new Error('Failed saving screenGroups.json') }
             extractScreenData(screenGroups)
           })
+        }
+        // TODO: Not implemented
+        // somehow contents from entu should get sanity checked before publishing to screens
+        if (connectionsInProgress === 0 && updateStatus === 'HAD_ERRORS') {
+          updateStatus = 'NO_UPDATES'
+          throw new Error('Parsing errors')
         }
         setTimeout(function () { pollEntu() }, POLLING_INTERVAL_MS)
       })
