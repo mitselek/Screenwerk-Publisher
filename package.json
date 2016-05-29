@@ -10,6 +10,9 @@
     "type": "git",
     "url": "https://github.com/mitselek/Screenwerk-Publisher"
   },
+  "scripts": {
+    "start": "ENTU_KEY=susistusiersusistusier ENTU_USER=6913 node master.js"
+  },
   "dependencies": {
     "async": "^1.5.2",
     "entulib": "^1.0.0",
