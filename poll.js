@@ -7,8 +7,8 @@ const entu = require('entulib')
 
 const APP_ENTU_OPTIONS = {
   entuUrl: process.env.ENTU_URL || 'https://piletilevi.entu.ee',
-  user: process.env.ENTU_USER || 6913,
-  key: process.env.ENTU_KEY || 'susistusiersusistusier'
+  user: process.env.ENTU_USER || 1000,
+  key: process.env.ENTU_KEY || ''
 }
 
 const POLLING_INTERVAL_MS = process.env.ENTU_POLL_SEC * 1e3 || 3e3
