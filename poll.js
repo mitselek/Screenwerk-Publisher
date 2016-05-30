@@ -272,7 +272,7 @@ function loadScreengroup (sgEid, callback) {
       connectionsInProgress--
       // console.log(' = = = loadScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
       if (opEntity.get(['properties', 'isPublished', 0, 'value'], 'False') === 'False') {
-        console.log('Screen group ' + sgEid + ' not published')
+        // console.log('Screen group ' + sgEid + ' not published')
         return
       }
       updateStatus = 'IS_UPDATED'

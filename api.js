@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 
 const app = express()
-app.listen(3000)
+app.listen(80)
 
 app.get('/', function (req, res) {
   const startAt = process.hrtime()
