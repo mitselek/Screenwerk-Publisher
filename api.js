@@ -8,6 +8,7 @@ app.listen(80)
 app.get('/', function (req, res) {
   const startAt = process.hrtime()
   let diff = process.hrtime(startAt)
+  res.status(204)
   res.send(JSON.stringify({
     error: {
       code: 'Matthew 7:7',
@@ -25,6 +26,7 @@ app.get('/configuration/:screenEid', function (req, res) {
   if (!fs.existsSync(screenFile)) {
     console.log('Requested screen ' + screenEid + ' is not known.')
     let diff = process.hrtime(startAt)
+    res.status(401)
     res.send(JSON.stringify({
       error: {
         code: 401,
