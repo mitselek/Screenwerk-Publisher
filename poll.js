@@ -245,8 +245,8 @@ function loadLayout (a_in, a_out) {
           op.set(layoutPlaylists, [layoutPlaylistEid], {
             eid: layoutPlaylistEid,
             name: opLayoutPlaylist.get(['properties', 'name', 0, 'value']),
-            left: opLayoutPlaylist.get(['properties', 'left', 0, 'value']),
-            top: opLayoutPlaylist.get(['properties', 'top', 0, 'value']),
+            left: Number(opLayoutPlaylist.get(['properties', 'left', 0, 'value'], 0)),
+            top: Number(opLayoutPlaylist.get(['properties', 'top', 0, 'value'], 0)),
             width: Number(opLayoutPlaylist.get(['properties', 'width', 0, 'value'], 0)),
             height: Number(opLayoutPlaylist.get(['properties', 'height', 0, 'value'], 0)),
             inPixels: (opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']) === "True"),
