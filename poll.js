@@ -144,6 +144,37 @@ function validateMedia (swMedia) {
   }
 }
 
+function validateLayoutPlaylist (swLayout, opLayoutPlaylist) {
+  if (opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']) === 'True') {
+    if (!swLayout.width) {
+      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' configured "in-pixels"' +
+        ', Layout should have width set. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+      swLayout.width = 0
+    }
+    if (!swLayout.height) {
+      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' configured "in-pixels"' +
+        ', Layout should have height set. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+      swLayout.height = 0
+    }
+    let playlistLeft = Number(opLayoutPlaylist.get(['properties', 'left', 0, 'value'], 0))
+    let playlistWidth = Number(opLayoutPlaylist.get(['properties', 'width', 0, 'value'], 0))
+    if (swLayout.width < playlistLeft + playlistWidth) {
+      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' left:' + playlistLeft + ' + width:' + playlistWidth +
+        ' = ' + (playlistLeft + playlistWidth) + ' outside ' +
+        'layout\'s width:' + swLayout.width + '. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+      swLayout.width = playlistLeft + playlistWidth
+    }
+    let playlistTop = Number(opLayoutPlaylist.get(['properties', 'top', 0, 'value'], 0))
+    let playlistHeight = Number(opLayoutPlaylist.get(['properties', 'height', 0, 'value'], 0))
+    if (swLayout.height < playlistTop + playlistHeight) {
+      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' top:' + playlistTop + ' + height:' + playlistHeight +
+        ' = ' + (playlistTop + playlistHeight) + ' outside ' +
+        'layout\'s height:' + swLayout.height + '. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+      swLayout.height = playlistTop + playlistHeight
+    }
+  }
+}
+
 function loadPlaylist (a_in, swPlaylist) {
   connectionsInProgress++
   // console.log(' = = = loadPlaylist ' + a_in.reference + ' incr ' + connectionsInProgress)
@@ -196,30 +227,33 @@ function loadLayout (a_in, a_out) {
   connectionsInProgress++
   // console.log(' = = = loadLayout ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
-    .then(function (opEntity) {
+    .then(function (opLayout) {
       connectionsInProgress--
       // console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
-      let layoutEid = opEntity.get(['id'])
+      let layoutEid = opLayout.get(['id'])
       a_out.layoutEid = layoutEid
-      a_out.name = opEntity.get(['properties', 'name', 0, 'value'], 'Layout ' + opEntity.get(['id']) + ' has no name')
-      a_out.width = opEntity.get(['properties', 'width', 0, 'value'])
-      a_out.height = opEntity.get(['properties', 'height', 0, 'value'])
+      a_out.name = opLayout.get(['properties', 'name', 0, 'value'], 'Layout ' + opLayout.get(['id']) + ' has no name')
+      a_out.width = opLayout.get(['properties', 'width', 0, 'value'])
+      if (a_out.width) { a_out.width = Number(a_out.width) }
+      a_out.height = opLayout.get(['properties', 'height', 0, 'value'])
+      if (a_out.height) { a_out.height = Number(a_out.height) }
       a_out.layoutPlaylists = {}
       ;(function (layoutPlaylists, layoutEid) {
-        loadChilds(layoutEid, 'sw-layout-playlist', function (opEntity) {
-          let layoutPlaylistEid = opEntity.get(['id'])
+        loadChilds(layoutEid, 'sw-layout-playlist', function (opLayoutPlaylist) {
+          validateLayoutPlaylist(a_out, opLayoutPlaylist)
+          let layoutPlaylistEid = opLayoutPlaylist.get(['id'])
           op.set(layoutPlaylists, [layoutPlaylistEid], {
             eid: layoutPlaylistEid,
-            name: opEntity.get(['properties', 'name', 0, 'value']),
-            left: opEntity.get(['properties', 'left', 0, 'value']),
-            top: opEntity.get(['properties', 'top', 0, 'value']),
-            width: opEntity.get(['properties', 'width', 0, 'value']),
-            height: opEntity.get(['properties', 'height', 0, 'value']),
-            inPixels: opEntity.get(['properties', 'in-pixels', 0, 'value']),
-            zindex: opEntity.get(['properties', 'zindex', 0, 'value']),
-            loop: opEntity.get(['properties', 'loop', 0, 'value'])
+            name: opLayoutPlaylist.get(['properties', 'name', 0, 'value']),
+            left: opLayoutPlaylist.get(['properties', 'left', 0, 'value']),
+            top: opLayoutPlaylist.get(['properties', 'top', 0, 'value']),
+            width: opLayoutPlaylist.get(['properties', 'width', 0, 'value']),
+            height: opLayoutPlaylist.get(['properties', 'height', 0, 'value']),
+            inPixels: opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']),
+            zindex: opLayoutPlaylist.get(['properties', 'zindex', 0, 'value']),
+            loop: opLayoutPlaylist.get(['properties', 'loop', 0, 'value'])
           })
-          loadPlaylist(opEntity.get(['properties', 'playlist', 0]), op.get(layoutPlaylists, [layoutPlaylistEid]))
+          loadPlaylist(opLayoutPlaylist.get(['properties', 'playlist', 0]), op.get(layoutPlaylists, [layoutPlaylistEid]))
         })
       })(a_out.layoutPlaylists, layoutEid)
     })
@@ -322,14 +356,17 @@ function loadScreengroup (sgEid, callback) {
           entu.edit(properties, APP_ENTU_OPTIONS)
             .then(function (result) {
               connectionsInProgress--
-              // console.log(' = = = setScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
               callback()
             })
+            // .catch(function (reason) {
+            //   console.log(properties, new Date(), reason)
+            //   throw (reason)
+            // })
         })
-        .catch(function (reason) {
-          console.log(properties, new Date(), reason)
-          throw (reason)
-        })
+        // .catch(function (reason) {
+        //   console.log(properties, new Date(), reason)
+        //   throw (reason)
+        // })
     })
     .catch(function (reason) {
       connectionsInProgress--
