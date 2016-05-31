@@ -196,9 +196,9 @@ function loadPlaylist (a_in, swPlaylist) {
             animate: opEntity.get(['properties', 'animate', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
             delay: opEntity.get(['properties', 'delay', 0, 'value']),
-            mute: opEntity.get(['properties', 'mute', 0, 'value']),
+            mute: (opEntity.get(['properties', 'mute', 0, 'value']) === "True"),
             ordinal: opEntity.get(['properties', 'ordinal', 0, 'value']),
-            stretch: opEntity.get(['properties', 'stretch', 0, 'value']),
+            stretch: (opEntity.get(['properties', 'stretch', 0, 'value']) === "True"),
             validFrom: opEntity.get(['properties', 'valid-from', 0, 'value']),
             validTo: opEntity.get(['properties', 'valid-to', 0, 'value'])
           }
@@ -249,9 +249,9 @@ function loadLayout (a_in, a_out) {
             top: opLayoutPlaylist.get(['properties', 'top', 0, 'value']),
             width: opLayoutPlaylist.get(['properties', 'width', 0, 'value']),
             height: opLayoutPlaylist.get(['properties', 'height', 0, 'value']),
-            inPixels: opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']),
+            inPixels: (opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']) === "True"),
             zindex: opLayoutPlaylist.get(['properties', 'zindex', 0, 'value']),
-            loop: opLayoutPlaylist.get(['properties', 'loop', 0, 'value'])
+            loop: (opLayoutPlaylist.get(['properties', 'loop', 0, 'value']) === "True")
           })
           loadPlaylist(opLayoutPlaylist.get(['properties', 'playlist', 0]), op.get(layoutPlaylists, [layoutPlaylistEid]))
         })
@@ -281,7 +281,7 @@ function loadConfiguration (a_in, a_out) {
           let childEid = opEntity.get(['id'])
           op.set(schedules, [childEid], {
             eid: childEid,
-            cleanup: opEntity.get(['properties', 'cleanup', 0, 'value']),
+            cleanup: (opEntity.get(['properties', 'cleanup', 0, 'value']) === "True"),
             crontab: opEntity.get(['properties', 'crontab', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
             validFrom: opEntity.get(['properties', 'valid-from', 0, 'value']),
