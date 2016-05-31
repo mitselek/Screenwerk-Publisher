@@ -201,7 +201,9 @@ function loadLayout (a_in, a_out) {
       // console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
       let layoutEid = opEntity.get(['id'])
       a_out.layoutEid = layoutEid
-      a_out.name = opEntity.get(['properties', 'name', 0, 'value'], '')
+      a_out.name = opEntity.get(['properties', 'name', 0, 'value'], 'Layout ' + opEntity.get(['id']) + ' has no name')
+      a_out.width = opEntity.get(['properties', 'width', 0, 'value'])
+      a_out.height = opEntity.get(['properties', 'height', 0, 'value'])
       a_out.layoutPlaylists = {}
       ;(function (layoutPlaylists, layoutEid) {
         loadChilds(layoutEid, 'sw-layout-playlist', function (opEntity) {
