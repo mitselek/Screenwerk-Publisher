@@ -3,7 +3,8 @@ const fs = require('fs')
 const path = require('path')
 
 const app = express()
-app.listen(80)
+
+app.listen(process.env.NODE_ENV === 'production' ? 80 : 3000)
 
 app.get('/', function (req, res) {
   const startAt = process.hrtime()

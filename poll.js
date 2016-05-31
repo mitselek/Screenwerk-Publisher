@@ -312,9 +312,19 @@ function loadScreengroup (sgEid, callback) {
       // console.log(' = = = setScreengroup ' + sgEid + ' incr ' + connectionsInProgress)
       entu.edit(properties, APP_ENTU_OPTIONS)
         .then(function (result) {
-          connectionsInProgress--
-          // console.log(' = = = setScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
-          callback()
+          let properties = {
+            entity_id: sgEid,
+            entity_definition: 'sw-screen-group',
+            dataproperty: 'published',
+            property_id: opEntity.get(['properties', 'published', 0, 'id']),
+            new_value: new Date().toISOString()
+          }
+          entu.edit(properties, APP_ENTU_OPTIONS)
+            .then(function (result) {
+              connectionsInProgress--
+              // console.log(' = = = setScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
+              callback()
+            })
         })
         .catch(function (reason) {
           console.log(properties, new Date(), reason)
