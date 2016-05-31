@@ -195,9 +195,9 @@ function loadPlaylist (a_in, swPlaylist) {
             playlistMediaEid: playlistMediaEid,
             animate: opEntity.get(['properties', 'animate', 0, 'value']),
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
-            delay: opEntity.get(['properties', 'delay', 0, 'value']),
+            delay: Number(opEntity.get(['properties', 'delay', 0, 'value'], 0)),
             mute: (opEntity.get(['properties', 'mute', 0, 'value']) === "True"),
-            ordinal: opEntity.get(['properties', 'ordinal', 0, 'value']),
+            ordinal: Number(opEntity.get(['properties', 'ordinal', 0, 'value'], 0)),
             stretch: (opEntity.get(['properties', 'stretch', 0, 'value']) === "True"),
             validFrom: opEntity.get(['properties', 'valid-from', 0, 'value']),
             validTo: opEntity.get(['properties', 'valid-to', 0, 'value'])
@@ -234,8 +234,8 @@ function loadLayout (a_in, a_out) {
       a_out.layoutEid = layoutEid
       a_out.name = opLayout.get(['properties', 'name', 0, 'value'], 'Layout ' + opLayout.get(['id']) + ' has no name')
       a_out.width = opLayout.get(['properties', 'width', 0, 'value'])
-      if (a_out.width) { a_out.width = Number(a_out.width) }
       a_out.height = opLayout.get(['properties', 'height', 0, 'value'])
+      if (a_out.width) { a_out.width = Number(a_out.width) }
       if (a_out.height) { a_out.height = Number(a_out.height) }
       a_out.layoutPlaylists = {}
       ;(function (layoutPlaylists, layoutEid) {
@@ -247,10 +247,10 @@ function loadLayout (a_in, a_out) {
             name: opLayoutPlaylist.get(['properties', 'name', 0, 'value']),
             left: opLayoutPlaylist.get(['properties', 'left', 0, 'value']),
             top: opLayoutPlaylist.get(['properties', 'top', 0, 'value']),
-            width: opLayoutPlaylist.get(['properties', 'width', 0, 'value']),
-            height: opLayoutPlaylist.get(['properties', 'height', 0, 'value']),
+            width: Number(opLayoutPlaylist.get(['properties', 'width', 0, 'value'], 0)),
+            height: Number(opLayoutPlaylist.get(['properties', 'height', 0, 'value'], 0)),
             inPixels: (opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']) === "True"),
-            zindex: opLayoutPlaylist.get(['properties', 'zindex', 0, 'value']),
+            zindex: Number(opLayoutPlaylist.get(['properties', 'zindex', 0, 'value'], 0)),
             loop: (opLayoutPlaylist.get(['properties', 'loop', 0, 'value']) === "True")
           })
           loadPlaylist(opLayoutPlaylist.get(['properties', 'playlist', 0]), op.get(layoutPlaylists, [layoutPlaylistEid]))
@@ -286,7 +286,7 @@ function loadConfiguration (a_in, a_out) {
             duration: opEntity.get(['properties', 'duration', 0, 'value']),
             validFrom: opEntity.get(['properties', 'valid-from', 0, 'value']),
             validTo: opEntity.get(['properties', 'valid-to', 0, 'value']),
-            ordinal: opEntity.get(['properties', 'ordinal', 0, 'value'])
+            ordinal: Number(opEntity.get(['properties', 'ordinal', 0, 'value'], 0))
           })
           loadLayout(opEntity.get(['properties', 'layout', 0]), op.get(schedules, [childEid]))
         })
@@ -382,8 +382,8 @@ function extractScreenData (screenGroups, callback) {
     async.forEachOf(screenGroup.screens, (screen, screenEid, callback) => {
       let configuration = {}
       configuration.configurationEid = screenGroup.configurationEid
-      configuration.screenGroupEid = screenGroupEid
-      configuration.screenEid = screenEid
+      configuration.screenGroupEid = Number(screenGroupEid)
+      configuration.screenEid = Number(screenEid)
       configuration.publishedAt = screenGroup.publishedAt
       configuration.updateInterval = screenGroup.updateInterval
       configuration.schedules = Object.keys(screenGroup.schedules).map((key) => { return screenGroup.schedules[key] })
@@ -392,7 +392,7 @@ function extractScreenData (screenGroups, callback) {
         async.each(schedule.layoutPlaylists, (layoutPlaylist, callback) => {
           layoutPlaylist.playlistMedias = Object.keys(layoutPlaylist.playlistMedias)
             .map((key) => { return layoutPlaylist.playlistMedias[key] })
-            .sort((a, b) => { return a.ordinal - b.ordinal })
+            .sort((a, b) => { return Number(a.ordinal) - Number(b.ordinal) })
           callback(null)
         },
         (err) => {
