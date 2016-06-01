@@ -460,10 +460,10 @@ function pollEntu () {
           setTimeout(function () { pollEntu() }, POLLING_INTERVAL_MS * 10)
           return
         }
-        console.log('\n' + 'Poll routine finished', new Date())
-        // process.stdout.clearLine()
-        // process.stdout.cursorTo(0)
-        // process.stdout.write('Poll routine finished at ' + new Date())
+        // console.log('Poll routine finished', new Date())
+        process.stdout.clearLine()
+        process.stdout.cursorTo(0)
+        process.stdout.write('Poll routine finished at ' + new Date())
         if (connectionsInProgress === 0 && updateStatus === 'IS_UPDATED') {
           updateStatus = 'NO_UPDATES'
           extractScreenData(screenGroups, (err) => {
