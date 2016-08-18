@@ -472,7 +472,8 @@ function pollEntu () {
           })
         }
         // TODO: Not implemented
-        // somehow contents from entu should get sanity checked before publishing to screens
+        // Somehow contents from entu should get sanity checked before publishing to screens.
+        // Most issues should be patched and notifications sent on the fly by validate* methods however.
         if (connectionsInProgress === 0 && updateStatus === 'HAD_ERRORS') {
           updateStatus = 'NO_UPDATES'
           throw new Error('Parsing errors')
