@@ -351,7 +351,7 @@ function loadScreengroup (sgEid, callback) {
             entity_definition: 'sw-screen-group',
             dataproperty: 'published',
             property_id: opEntity.get(['properties', 'published', 0, 'id']),
-            new_value: new Date().toISOString()
+            new_value: new Date().toISOString().slice(0, 19).replace('T', ' ')
           }
           entu.edit(properties, APP_ENTU_OPTIONS)
             .then(function (result) {
