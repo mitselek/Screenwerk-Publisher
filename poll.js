@@ -2,6 +2,7 @@ const async = require('async')
 const fs = require('fs')
 const op = require('object-path')
 const path = require('path')
+const YAML = require('yamljs')
 
 const entu = require('entulib')
 
@@ -34,9 +35,9 @@ if (fs.existsSync('screenGroups.json')) {
 }
 
 function setLastPollTs (newTs) {
-  // console.log('setLastPollTs. Current: ' + new Date(lastPollTs * 1e0) + ', new: ' + new Date(newTs * 1e0))
+  console.log('setLastPollTs. Current: ' + new Date(lastPollTs * 1e0) + ', new: ' + new Date(newTs * 1e0))
   if (newTs && newTs > lastPollTs) {
-    // console.log('setLastPollTs from ' + new Date(lastPollTs * 1e0) + ' to ' + new Date(newTs * 1e0))
+    console.log('setLastPollTs from ' + new Date(lastPollTs * 1e0) + ' to ' + new Date(newTs * 1e0))
     lastPollTs = newTs
   } else {
     console.log('failed to set lastPollTs to ' + newTs)
@@ -50,18 +51,18 @@ function removeScreengroup (eid) {
 
 function loadReferrals (parentEid, eDefinition, callback) {
   connectionsInProgress++
-  // console.log(' = = = loadReferrals ' + parentEid + ' incr ' + connectionsInProgress)
+  console.log(' = = = loadReferrals ' + parentEid + ' incr ' + connectionsInProgress)
   entu.getReferrals(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function (referrals) {
       connectionsInProgress--
-      // console.log(' = = = loadReferrals ' + parentEid + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadReferrals ' + parentEid + ' decr ' + connectionsInProgress)
       referrals.forEach(function (referral) {
         callback(referral)
       })
     })
     .catch(function (reason) {
       connectionsInProgress--
-      // console.log(' = = = loadReferrals fail ' + parentEid + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadReferrals fail ' + parentEid + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -69,18 +70,18 @@ function loadReferrals (parentEid, eDefinition, callback) {
 
 function loadChilds (parentEid, eDefinition, callback) {
   connectionsInProgress++
-  // console.log(' = = = loadChilds ' + parentEid + ' incr ' + connectionsInProgress)
+  console.log(' = = = loadChilds ' + parentEid + ' incr ' + connectionsInProgress)
   entu.getChilds(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function (childs) {
       connectionsInProgress--
-      // console.log(' = = = loadChilds ' + parentEid + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadChilds ' + parentEid + ' decr ' + connectionsInProgress)
       childs.forEach(function (child) {
         callback(child)
       })
     })
     .catch(function (reason) {
       connectionsInProgress--
-      // console.log(' = = = loadChilds fail ' + parentEid + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadChilds fail ' + parentEid + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -92,11 +93,12 @@ function loadMedia (a_in, callback) {
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
+      // console.log(' = = = loadMedia ' + a_in.reference + ' decr ' + connectionsInProgress)
       callback(null, opEntity)
     })
     .catch(function (reason) {
       connectionsInProgress--
-      // console.log(' = = = loadMedia fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadMedia fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -131,57 +133,67 @@ function buildMedia (opMedia, swMedia, callback) {
   callback(null)
 }
 
-function validateMedia (swMedia) {
+function validateMedia (swMedia, callback) {
   if (swMedia.type === 'Image') {
     if (!swMedia.duration || swMedia.duration === 0) {
-      console.log('Noticed: Image media without duration: ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-media' + swMedia.mediaEid)
+      let notice = 'Noticed: Image media without duration: ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-media' + swMedia.mediaEid
+      console.log(notice)
+      callback(null, notice)
     }
   }
   if (swMedia.type !== 'URL') {
     if (!swMedia.file || !swMedia.fileName) {
-      throw new Error('Error: Missing file for media ' + swMedia.mediaEid + '!')
+      return callback(new Error('Error: Missing file for media ' + swMedia.mediaEid + '!'))
     }
   }
 }
 
-function validateLayoutPlaylist (swLayout, opLayoutPlaylist) {
+function validateLayoutPlaylist (swLayout, opLayoutPlaylist, callback) {
   if (opLayoutPlaylist.get(['properties', 'in-pixels', 0, 'value']) === 'True') {
     if (!swLayout.width) {
-      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' configured "in-pixels"' +
-        ', Layout should have width set. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+      let notice = 'Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' configured "in-pixels"' +
+        ', Layout should have width set. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid
+      console.log(notice)
+      callback(null, notice)
       swLayout.width = 0
     }
     if (!swLayout.height) {
-      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' configured "in-pixels"' +
-        ', Layout should have height set. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+      let notice = 'Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' configured "in-pixels"' +
+        ', Layout should have height set. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid
+      console.log(notice)
+      callback(null, notice)
       swLayout.height = 0
     }
     let playlistLeft = Number(opLayoutPlaylist.get(['properties', 'left', 0, 'value'], 0))
     let playlistWidth = Number(opLayoutPlaylist.get(['properties', 'width', 0, 'value'], 0))
     if (swLayout.width < playlistLeft + playlistWidth) {
-      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' left:' + playlistLeft + ' + width:' + playlistWidth +
+      let notice = 'Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' left:' + playlistLeft + ' + width:' + playlistWidth +
         ' = ' + (playlistLeft + playlistWidth) + ' outside ' +
-        'layout\'s width:' + swLayout.width + '. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+        'layout\'s width:' + swLayout.width + '. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid
+      console.log(notice)
+      callback(null, notice)
       swLayout.width = playlistLeft + playlistWidth
     }
     let playlistTop = Number(opLayoutPlaylist.get(['properties', 'top', 0, 'value'], 0))
     let playlistHeight = Number(opLayoutPlaylist.get(['properties', 'height', 0, 'value'], 0))
     if (swLayout.height < playlistTop + playlistHeight) {
-      console.log('Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' top:' + playlistTop + ' + height:' + playlistHeight +
+      let notice = 'Noticed: LayoutPlaylist ' + opLayoutPlaylist.get(['id']) + ' top:' + playlistTop + ' + height:' + playlistHeight +
         ' = ' + (playlistTop + playlistHeight) + ' outside ' +
-        'layout\'s height:' + swLayout.height + '. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid)
+        'layout\'s height:' + swLayout.height + '. ' + APP_ENTU_OPTIONS.entuUrl + '/entity/sw-layout/' + swLayout.layoutEid
+      console.log(notice)
+      callback(null, notice)
       swLayout.height = playlistTop + playlistHeight
     }
   }
 }
 
-function loadPlaylist (a_in, swPlaylist) {
+function loadPlaylist (a_in, swPlaylist, n_callback) {
   connectionsInProgress++
-  // console.log(' = = = loadPlaylist ' + a_in.reference + ' incr ' + connectionsInProgress)
+  console.log(' = = = loadPlaylist ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
-      // console.log(' = = = loadPlaylist ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadPlaylist ' + a_in.reference + ' decr ' + connectionsInProgress)
       let playlistEid = opEntity.get(['id'])
       swPlaylist.playlistEid = playlistEid
       swPlaylist.name = opEntity.get(['properties', 'name', 0, 'value'], '')
@@ -207,9 +219,7 @@ function loadPlaylist (a_in, swPlaylist) {
             if (err) { throw err }
             buildMedia(opMedia, swMedia, (err) => {
               if (err) { throw err }
-              validateMedia(swMedia, (err) => {
-                if (err) { throw err }
-              })
+              validateMedia(swMedia, n_callback)
             })
           })
         })
@@ -217,19 +227,19 @@ function loadPlaylist (a_in, swPlaylist) {
     })
     .catch(function (reason) {
       connectionsInProgress--
-      // console.log(' = = = loadPlaylist fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadPlaylist fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
-      throw (reason)
+      return n_callback(reason)
     })
 }
 
-function loadLayout (a_in, a_out) {
+function loadLayout (a_in, a_out, callback) {
   connectionsInProgress++
-  // console.log(' = = = loadLayout ' + a_in.reference + ' incr ' + connectionsInProgress)
+  console.log(' = = = loadLayout ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opLayout) {
       connectionsInProgress--
-      // console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
       let layoutEid = opLayout.get(['id'])
       a_out.layoutEid = layoutEid
       a_out.name = opLayout.get(['properties', 'name', 0, 'value'], 'Layout ' + opLayout.get(['id']) + ' has no name')
@@ -240,7 +250,7 @@ function loadLayout (a_in, a_out) {
       a_out.layoutPlaylists = {}
       ;(function (layoutPlaylists, layoutEid) {
         loadChilds(layoutEid, 'sw-layout-playlist', function (opLayoutPlaylist) {
-          validateLayoutPlaylist(a_out, opLayoutPlaylist)
+          validateLayoutPlaylist(a_out, opLayoutPlaylist, callback)
           let layoutPlaylistEid = opLayoutPlaylist.get(['id'])
           op.set(layoutPlaylists, [layoutPlaylistEid], {
             eid: layoutPlaylistEid,
@@ -253,25 +263,26 @@ function loadLayout (a_in, a_out) {
             zindex: Number(opLayoutPlaylist.get(['properties', 'zindex', 0, 'value'], 0)),
             loop: (opLayoutPlaylist.get(['properties', 'loop', 0, 'value']) === "True")
           })
-          loadPlaylist(opLayoutPlaylist.get(['properties', 'playlist', 0]), op.get(layoutPlaylists, [layoutPlaylistEid]))
+          let swPlaylist = op.get(layoutPlaylists, [layoutPlaylistEid])
+          loadPlaylist(opLayoutPlaylist.get(['properties', 'playlist', 0]), swPlaylist, callback)
         })
       })(a_out.layoutPlaylists, layoutEid)
     })
     .catch(function (reason) {
       connectionsInProgress--
-      // console.log(' = = = loadLayout fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadLayout fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
 }
 
-function loadConfiguration (a_in, a_out) {
+function loadConfiguration (a_in, a_out, callback) {
   connectionsInProgress++
-  // console.log(' = = = loadConfiguration ' + a_in.reference + ' incr ' + connectionsInProgress)
+  console.log(' = = = loadConfiguration ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
-      // console.log(' = = = loadConfiguration ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadConfiguration ' + a_in.reference + ' decr ' + connectionsInProgress)
       a_out.configurationEid = opEntity.get(['id'])
       a_out.updateInterval = Number(opEntity.get(['properties', 'update-interval', 0, 'value'], 0))
       a_out.schedules = {}
@@ -288,13 +299,13 @@ function loadConfiguration (a_in, a_out) {
             validTo: opEntity.get(['properties', 'valid-to', 0, 'value']),
             ordinal: Number(opEntity.get(['properties', 'ordinal', 0, 'value'], 0))
           })
-          loadLayout(opEntity.get(['properties', 'layout', 0]), op.get(schedules, [childEid]))
+          loadLayout(opEntity.get(['properties', 'layout', 0]), op.get(schedules, [childEid]), callback)
         })
       })(a_out.schedules, a_out.configurationEid)
     })
     .catch(function (reason) {
       connectionsInProgress--
-      // console.log(' = = = loadConfiguration fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      console.log(' = = = loadConfiguration fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -308,7 +319,7 @@ function loadScreengroup (sgEid, callback) {
       connectionsInProgress--
       // console.log(' = = = loadScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
       if (opEntity.get(['properties', 'isPublished', 0, 'value'], 'False') === 'False') {
-        // console.log('Screen group ' + sgEid + ' not published')
+        console.log('Screen group ' + sgEid + ' not published')
         return
       }
       updateStatus = 'IS_UPDATED'
@@ -319,7 +330,31 @@ function loadScreengroup (sgEid, callback) {
         publishedAt: new Date().toISOString(),
         screens: {}
       })
-      loadConfiguration(opEntity.get(['properties', 'configuration', 0]), screenGroups[sgEid])
+      console.log('loadConfiguration started')
+      loadConfiguration(opEntity.get(['properties', 'configuration', 0]), screenGroups[sgEid], (err, notice) => {
+        console.log('loadConfiguration finished')
+        if (notice) {
+          let feedback = YAML.parse(opEntity.get(['properties', 'feedback', 0, 'value'], '[]'))
+          while (feedback.length > 4) {
+            feedback.pop()
+          }
+          feedback.unshift({'time': new Date().toISOString().slice(0,19), 'message': notice})
+          let properties = {
+            entity_id: sgEid,
+            entity_definition: 'sw-screen-group',
+            dataproperty: 'feedback',
+            property_id: opEntity.get(['properties', 'feedback', 0, 'id']),
+            new_value: YAML.stringify(feedback)
+          }
+          connectionsInProgress++
+          // console.log(' = = = setScreengroup ' + sgEid + ' incr ' + connectionsInProgress)
+          entu.edit(properties, APP_ENTU_OPTIONS)
+            .then(function (result) {
+              callback(null, notice)
+              connectionsInProgress--
+            })
+        }
+      })
       ;(function (sgEid) {
         loadReferrals(sgEid, 'sw-screen', function (opEntity) {
           op.set(screenGroups[sgEid].screens, [opEntity.get(['id'])], {
@@ -356,17 +391,8 @@ function loadScreengroup (sgEid, callback) {
           entu.edit(properties, APP_ENTU_OPTIONS)
             .then(function (result) {
               connectionsInProgress--
-              callback()
             })
-            // .catch(function (reason) {
-            //   console.log(properties, new Date(), reason)
-            //   throw (reason)
-            // })
         })
-        // .catch(function (reason) {
-        //   console.log(properties, new Date(), reason)
-        //   throw (reason)
-        // })
     })
     .catch(function (reason) {
       connectionsInProgress--
@@ -452,7 +478,18 @@ function pollEntu () {
         }
 
         console.log('(' + (toGo--) + ') Updating ' + update.definition + ' ' + sgEid + ' @ ' + update.timestamp + ' ' + (new Date(update.timestamp * 1e3)))
-        loadScreengroup(sgEid, callback)
+        console.log('loadScreengroup started')
+        loadScreengroup(sgEid, (err, notice) => {
+          console.log('loadScreengroup finished')
+          if (notice && err) {           // Logic is actually correct here
+            console.log(notice)          // we only want to callback
+            return callback(err)         // - if there is an error
+          }                              // - or if there is no notice
+          if (notice) {                  //
+            return console.log(notice)   //
+          }                              //
+          return callback(err)           //
+        })
       }, function (err) {
         if (err) {
           let message = '*INFO*: Poll routine stumbled. Restart in ' + POLLING_INTERVAL_MS / 1e2
