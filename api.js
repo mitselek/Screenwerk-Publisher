@@ -5,6 +5,7 @@ const path = require('path')
 const app = express()
 
 app.listen(process.env.NODE_ENV === 'production' ? 80 : 3000)
+console.log('Start serving screen configurations.')
 
 app.get('/', function (req, res) {
   const startAt = process.hrtime()
@@ -44,5 +45,5 @@ app.get('/configuration/:screenEid', function (req, res) {
   console.log('Serving meta for screen ' + screenEid + '.')
   let diff = process.hrtime(startAt)
   screen.responseTimeMs = diff[0] * 1e3 + diff[1] * 1e-6
-  res.send(JSON.stringify(screen))
+  res.send(JSON.stringify(screen, null, 2))
 })
