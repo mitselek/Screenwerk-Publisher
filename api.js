@@ -22,7 +22,7 @@ app.get('/', function (req, res) {
 })
 
 app.get('/configuration/:screenEid', function (req, res) {
-  console.log('Meta for screen ' + screenEid + ' requested.')
+  // console.log('Meta for screen ' + screenEid + ' requested.')
   const startAt = process.hrtime()
   const screenEid = req.params.screenEid
   const screenFile = path.join(__dirname, 'screens', screenEid + '.json')
@@ -43,7 +43,7 @@ app.get('/configuration/:screenEid', function (req, res) {
 
   let screen = JSON.parse(fs.readFileSync(screenFile))
   screen.isoDate = new Date().toISOString()
-  console.log('Serving meta for screen ' + screenEid + '.')
+  // console.log('Serving meta for screen ' + screenEid + '.')
   let diff = process.hrtime(startAt)
   screen.responseTimeMs = diff[0] * 1e3 + diff[1] * 1e-6
   res.send(JSON.stringify(screen, null, 2))
