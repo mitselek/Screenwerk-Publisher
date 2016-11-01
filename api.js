@@ -22,6 +22,7 @@ app.get('/', function (req, res) {
 })
 
 app.get('/configuration/:screenEid', function (req, res) {
+  console.log('Meta for screen ' + screenEid + ' requested.')
   const startAt = process.hrtime()
   const screenEid = req.params.screenEid
   const screenFile = path.join(__dirname, 'screens', screenEid + '.json')
