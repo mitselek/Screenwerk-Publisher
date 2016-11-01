@@ -50,18 +50,18 @@ function removeScreengroup (eid) {
 
 function loadReferrals (parentEid, eDefinition, callback) {
   connectionsInProgress++
-  console.log(' = = = loadReferrals ' + parentEid + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadReferrals ' + parentEid + ' incr ' + connectionsInProgress)
   entu.getReferrals(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function (referrals) {
       connectionsInProgress--
-      console.log(' = = = loadReferrals ' + parentEid + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadReferrals ' + parentEid + ' decr ' + connectionsInProgress)
       referrals.forEach(function (referral) {
         callback(referral)
       })
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadReferrals fail ' + parentEid + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadReferrals fail ' + parentEid + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -69,18 +69,18 @@ function loadReferrals (parentEid, eDefinition, callback) {
 
 function loadChilds (parentEid, eDefinition, callback) {
   connectionsInProgress++
-  console.log(' = = = loadChilds ' + parentEid + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadChilds ' + parentEid + ' incr ' + connectionsInProgress)
   entu.getChilds(parentEid, eDefinition, APP_ENTU_OPTIONS)
     .then(function (childs) {
       connectionsInProgress--
-      console.log(' = = = loadChilds ' + parentEid + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadChilds ' + parentEid + ' decr ' + connectionsInProgress)
       childs.forEach(function (child) {
         callback(child)
       })
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadChilds fail ' + parentEid + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadChilds fail ' + parentEid + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -88,7 +88,7 @@ function loadChilds (parentEid, eDefinition, callback) {
 
 function loadMedia (a_in, callback) {
   connectionsInProgress++
-  console.log(' = = = loadMedia ' + a_in.reference + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadMedia ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
@@ -96,14 +96,14 @@ function loadMedia (a_in, callback) {
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadMedia fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadMedia fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
 }
 
 function buildMedia (opMedia, swMedia, callback) {
-  console.log(' = = = File ' + JSON.stringify(opMedia.get(['properties', 'file', 0], 'No file for ' + opMedia.get(['properties', 'type', 0, 'value'], '_type_') + ' for media ' + opMedia.get('id'))))
+  // console.log(' = = = File ' + JSON.stringify(opMedia.get(['properties', 'file', 0], 'No file for ' + opMedia.get(['properties', 'type', 0, 'value'], '_type_') + ' for media ' + opMedia.get('id'))))
   let mediaEid = opMedia.get(['id'])
   swMedia.mediaEid = mediaEid
   swMedia.file = opMedia.get(['properties', 'file', 0, 'file'])
@@ -177,11 +177,11 @@ function validateLayoutPlaylist (swLayout, opLayoutPlaylist) {
 
 function loadPlaylist (a_in, swPlaylist) {
   connectionsInProgress++
-  console.log(' = = = loadPlaylist ' + a_in.reference + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadPlaylist ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
-      console.log(' = = = loadPlaylist ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadPlaylist ' + a_in.reference + ' decr ' + connectionsInProgress)
       let playlistEid = opEntity.get(['id'])
       swPlaylist.playlistEid = playlistEid
       swPlaylist.name = opEntity.get(['properties', 'name', 0, 'value'], '')
@@ -217,7 +217,7 @@ function loadPlaylist (a_in, swPlaylist) {
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadPlaylist fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadPlaylist fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -225,11 +225,11 @@ function loadPlaylist (a_in, swPlaylist) {
 
 function loadLayout (a_in, a_out) {
   connectionsInProgress++
-  console.log(' = = = loadLayout ' + a_in.reference + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadLayout ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opLayout) {
       connectionsInProgress--
-      console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadLayout ' + a_in.reference + ' decr ' + connectionsInProgress)
       let layoutEid = opLayout.get(['id'])
       a_out.layoutEid = layoutEid
       a_out.name = opLayout.get(['properties', 'name', 0, 'value'], 'Layout ' + opLayout.get(['id']) + ' has no name')
@@ -259,7 +259,7 @@ function loadLayout (a_in, a_out) {
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadLayout fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadLayout fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -267,11 +267,11 @@ function loadLayout (a_in, a_out) {
 
 function loadConfiguration (a_in, a_out) {
   connectionsInProgress++
-  console.log(' = = = loadConfiguration ' + a_in.reference + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadConfiguration ' + a_in.reference + ' incr ' + connectionsInProgress)
   entu.getEntity(a_in.reference, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
-      console.log(' = = = loadConfiguration ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadConfiguration ' + a_in.reference + ' decr ' + connectionsInProgress)
       a_out.configurationEid = opEntity.get(['id'])
       a_out.updateInterval = Number(opEntity.get(['properties', 'update-interval', 0, 'value'], 0))
       a_out.schedules = {}
@@ -294,7 +294,7 @@ function loadConfiguration (a_in, a_out) {
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadConfiguration fail ' + a_in.reference + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadConfiguration fail ' + a_in.reference + ' decr ' + connectionsInProgress)
       console.log(new Date(), reason)
       throw (reason)
     })
@@ -302,11 +302,11 @@ function loadConfiguration (a_in, a_out) {
 
 function loadScreengroup (sgEid, callback) {
   connectionsInProgress++
-  console.log(' = = = loadScreengroup ' + sgEid + ' incr ' + connectionsInProgress)
+  // console.log(' = = = loadScreengroup ' + sgEid + ' incr ' + connectionsInProgress)
   entu.getEntity(sgEid, APP_ENTU_OPTIONS)
     .then(function (opEntity) {
       connectionsInProgress--
-      console.log(' = = = loadScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadScreengroup ' + sgEid + ' decr ' + connectionsInProgress)
       if (opEntity.get(['properties', 'isPublished', 0, 'value'], 'False') === 'False') {
         // console.log('Screen group ' + sgEid + ' not published')
         return
@@ -343,7 +343,7 @@ function loadScreengroup (sgEid, callback) {
         new_value: ''
       }
       connectionsInProgress++
-      console.log(' = = = setScreengroup ' + sgEid + ' incr ' + connectionsInProgress)
+      // console.log(' = = = setScreengroup ' + sgEid + ' incr ' + connectionsInProgress)
       entu.edit(properties, APP_ENTU_OPTIONS)
         .then(function (result) {
           let properties = {
@@ -358,11 +358,19 @@ function loadScreengroup (sgEid, callback) {
               connectionsInProgress--
               callback()
             })
+            // .catch(function (reason) {
+            //   console.log(properties, new Date(), reason)
+            //   throw (reason)
+            // })
         })
+        // .catch(function (reason) {
+        //   console.log(properties, new Date(), reason)
+        //   throw (reason)
+        // })
     })
     .catch(function (reason) {
       connectionsInProgress--
-      console.log(' = = = loadScreengroup fail' + sgEid + ' decr ' + connectionsInProgress)
+      // console.log(' = = = loadScreengroup fail' + sgEid + ' decr ' + connectionsInProgress)
       let message = '*INFO*: loadScreengroup failed, retry in ' + POLLING_INTERVAL_MS / 1e2
       console.log(message, new Date(), reason)
       setTimeout(function () { loadScreengroup(sgEid, callback) }, POLLING_INTERVAL_MS * 10)
@@ -459,7 +467,7 @@ function pollEntu () {
             if (err) { console.log(err) }
             fs.writeFile('screenGroups.json', JSON.stringify(screenGroups, null, 4), (err) => {
               if (err) { throw new Error('Failed saving screenGroups.json') }
-              console.log('Up to date as of ' + (new Date()))
+              console.log('Updated ' + sgEid + ' @ ' + (new Date()))
             })
           })
         }
