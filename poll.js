@@ -326,7 +326,7 @@ function loadScreengroup (sgEid, callback) {
         publishedAt: new Date().toISOString(),
         screens: {}
       })
-      logStr.write('Publishing SG ' + sgEid + ' at ' + screenGroups[sgEid].publishedAt + '\n')
+      logStr.write(sgEid + ' published at ' + screenGroups[sgEid].publishedAt + '\n')
       loadConfiguration(opEntity.get(['properties', 'configuration', 0]), screenGroups[sgEid])
       ;(function (sgEid) {
         loadReferrals(sgEid, 'sw-screen', function (opEntity) {
@@ -475,7 +475,7 @@ function pollEntu () {
             if (err) { console.log(err) }
             fs.writeFile('screenGroups.json', JSON.stringify(screenGroups, null, 4), (err) => {
               if (err) { throw new Error('Failed saving screenGroups.json') }
-              logStr.write('Updated ' + sgEid + ' at ' + (new Date()) + '\n')
+              logStr.write(sgEid + ' updated at ' + (new Date()) + '\n')
               console.log('Updated ' + sgEid + ' at ' + (new Date()))
             })
           })
