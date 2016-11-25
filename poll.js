@@ -327,7 +327,7 @@ function loadScreengroup (sgEid, callback) {
         publishedAt: new Date().toISOString(),
         screens: {}
       })
-      logStr.out('Publishing SG ' + sgEid ' at ' + screenGroups[sgEid].publishedAt)
+      logStr.out('Publishing SG ' + sgEid + ' at ' + screenGroups[sgEid].publishedAt)
       loadConfiguration(opEntity.get(['properties', 'configuration', 0]), screenGroups[sgEid])
       ;(function (sgEid) {
         loadReferrals(sgEid, 'sw-screen', function (opEntity) {
