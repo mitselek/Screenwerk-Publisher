@@ -28,7 +28,6 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir)
 }
 const logStr = fs.createWriteStream(path.join(logDir, 'out.log'))
-logStr.out = function(txt) { logstr.write(txt + '\n') }
 
 
 var lastPollTs = new Date().getTime() - 60 * 60 * 1e3
@@ -327,7 +326,7 @@ function loadScreengroup (sgEid, callback) {
         publishedAt: new Date().toISOString(),
         screens: {}
       })
-      logStr.out('Publishing SG ' + sgEid + ' at ' + screenGroups[sgEid].publishedAt)
+      logStr.write('Publishing SG ' + sgEid + ' at ' + screenGroups[sgEid].publishedAt + '\n')
       loadConfiguration(opEntity.get(['properties', 'configuration', 0]), screenGroups[sgEid])
       ;(function (sgEid) {
         loadReferrals(sgEid, 'sw-screen', function (opEntity) {
@@ -476,7 +475,7 @@ function pollEntu () {
             if (err) { console.log(err) }
             fs.writeFile('screenGroups.json', JSON.stringify(screenGroups, null, 4), (err) => {
               if (err) { throw new Error('Failed saving screenGroups.json') }
-              logStr.out('Updated ' + sgEid + ' at ' + (new Date()))
+              logStr.write('Updated ' + sgEid + ' at ' + (new Date()) + '\n')
               console.log('Updated ' + sgEid + ' at ' + (new Date()))
             })
           })
