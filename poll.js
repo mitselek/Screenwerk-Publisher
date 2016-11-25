@@ -475,8 +475,8 @@ function pollEntu () {
             if (err) { console.log(err) }
             fs.writeFile('screenGroups.json', JSON.stringify(screenGroups, null, 4), (err) => {
               if (err) { throw new Error('Failed saving screenGroups.json') }
-              logStr.write(sgEid + ' updated at ' + (new Date().toJSON()) + '\n')
-              console.log('Updated ' + sgEid + ' at ' + (new Date()))
+              logStr.write(sgEid + ' compiled at ' + (new Date().toJSON()) + '\n')
+              console.log('Compiled ' + sgEid + ' at ' + (new Date()))
             })
           })
         }
