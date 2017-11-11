@@ -1,7 +1,7 @@
 {
   "name": "ScreenWerk-Publisher",
   "description": "Backend for Screenwerk players",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "./master.js",
   "license": "MIT",
   "private": true,
@@ -11,6 +11,7 @@
     "url": "https://github.com/mitselek/Screenwerk-Publisher"
   },
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node master.js"
   },
   "dependencies": {

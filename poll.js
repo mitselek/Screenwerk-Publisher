@@ -18,6 +18,23 @@ Object.keys(APP_ENTU_OPTIONS).forEach(function (key) {
   pollOptions[key] = APP_ENTU_OPTIONS[key]
 })
 
+Date.prototype.toLocalString = function() {
+    var tzo = -this.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = function(num) {
+            var norm = Math.floor(Math.abs(num));
+            return (norm < 10 ? '0' : '') + norm;
+        };
+    return this.getFullYear() +
+        '-' + pad(this.getMonth() + 1) +
+        '-' + pad(this.getDate()) +
+        'T' + pad(this.getHours()) +
+        ':' + pad(this.getMinutes()) +
+        ':' + pad(this.getSeconds()) +
+        dif + pad(tzo / 60) +
+        ':' + pad(tzo % 60);
+}
+
 const screensDir = path.join(__dirname, 'screens')
 if (!fs.existsSync(screensDir)) {
   fs.mkdirSync(screensDir)
@@ -323,7 +340,7 @@ function loadScreengroup (sgEid, callback) {
         eid: opEntity.get(['id']),
         lastPoll: new Date(lastPollTs).toISOString(),
         name: opEntity.get(['properties', 'name', 0, 'value'], ''),
-        publishedAt: new Date().toISOString(),
+        publishedAt: new Date().toLocalString(),
         screens: {}
       })
       logStr.write(sgEid + ' published at ' + screenGroups[sgEid].publishedAt + '\n')
@@ -359,7 +376,7 @@ function loadScreengroup (sgEid, callback) {
             entity_definition: 'sw-screen-group',
             dataproperty: 'published',
             property_id: opEntity.get(['properties', 'published', 0, 'id']),
-            new_value: new Date().toISOString().slice(0, 19).replace('T', ' ')
+            new_value: new Date().toLocalString().slice(0, 19).replace('T', ' ')
           }
           entu.edit(properties, APP_ENTU_OPTIONS)
             .then(function (result) {
