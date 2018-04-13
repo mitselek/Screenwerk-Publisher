@@ -397,9 +397,9 @@ function loadScreengroup (sgEid, callback) {
     .catch(function (reason) {
       connectionsInProgress--
       // console.log(' = = = loadScreengroup fail' + sgEid + ' decr ' + connectionsInProgress)
-      let message = '*INFO*: loadScreengroup failed, retry in ' + POLLING_INTERVAL_MS / 1e2
+      let message = '*INFO*: loadScreengroup failed, retry in ' + POLLING_INTERVAL_MS / 1e3
       console.log(message, new Date(), reason)
-      setTimeout(function () { loadScreengroup(sgEid, callback) }, POLLING_INTERVAL_MS * 10)
+      setTimeout(function () { loadScreengroup(sgEid, callback) }, POLLING_INTERVAL_MS * 1)
     })
 }
 

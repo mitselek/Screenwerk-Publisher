@@ -1,7 +1,7 @@
 {
   "name": "ScreenWerk-Publisher",
   "description": "Backend for Screenwerk players",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "main": "./master.js",
   "license": "MIT",
   "private": true,
