@@ -11,7 +11,8 @@ const APP_ENTU_OPTIONS = {
   key: process.env.ENTU_KEY || ''
 }
 
-const POLLING_INTERVAL_MS = process.env.ENTU_POLL_SEC * 1e3 || 3e3
+const POLLING_INTERVAL_MS = 60e3
+// const POLLING_INTERVAL_MS = process.env.ENTU_POLL_SEC * 1e3 || 3e3
 
 var pollOptions = {}
 Object.keys(APP_ENTU_OPTIONS).forEach(function (key) {
