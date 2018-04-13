@@ -450,9 +450,9 @@ function extractScreenData (screenGroups, callback) {
 function pollEntu () {
   if (connectionsInProgress !== 0) {
     let message = '*INFO*: pollEntu already busy (' + connectionsInProgress + '). ' +
-      'Try again in ' + POLLING_INTERVAL_MS / 1e2 + 'sec'
+      'Try again in ' + POLLING_INTERVAL_MS / 1e3 + 'sec'
     console.log(message, new Date())
-    setTimeout(function () { pollEntu() }, POLLING_INTERVAL_MS * 10)
+    setTimeout(function () { pollEntu() }, POLLING_INTERVAL_MS * 1)
     return
   }
 
