@@ -511,9 +511,9 @@ function pollEntu () {
     .then(function () {
     })
     .catch(function (reason) {
-      let message = '*INFO*: Entu.pollUpdates failed. Restart in ' + POLLING_INTERVAL_MS / 1e2
+      let message = '*INFO*: Entu.pollUpdates failed. Restart in ' + POLLING_INTERVAL_MS / 1e3
       console.log(message, new Date(), reason)
-      setTimeout(function () { pollEntu() }, POLLING_INTERVAL_MS * 10)
+      setTimeout(function () { pollEntu() }, POLLING_INTERVAL_MS * 1)
     })
 }
 
