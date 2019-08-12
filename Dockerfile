@@ -1,4 +1,4 @@
-FROM node:6-slim
+FROM node:10-slim
 
 ADD ./ /usr/src/swpublisher
 RUN cd /usr/src/swpublisher && npm --silent --production install
